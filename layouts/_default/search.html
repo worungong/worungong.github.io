@@ -1,0 +1,110 @@
+{{- define "main" -}}
+<div class="search-page">
+    <header class="search-header">
+        <h1 class="search-title">{{ .Title }}</h1>
+    </header>
+    
+    <div class="search-input-wrapper">
+        <input type="text" id="searchInput" placeholder="Search..." autocomplete="off" />
+        <button id="searchButton">🔎︎</button>
+    </div>
+    
+    <div id="finalResults" class="search-results"></div>
+    <div id="searchResults" style="display: none;"></div>
+</div>
+
+<style>
+    .search-page { max-width: 800px; margin: 0 auto; padding: 2rem; }
+    .search-input-wrapper { display: flex; gap: 0.5rem; margin-bottom: 3rem; }
+    #searchInput { flex: 1; padding: 1rem; font-size: 1.1rem; border: 1px solid var(--border); border-radius: 4px; background: var(--code-bg); color: var(--primary); }
+    #searchButton { padding: 1rem 1.5rem; background: var(--primary); color: var(--theme); border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    .res-list { list-style: none; padding: 0; margin: 0; }
+    .res-item { margin-bottom: 1.5rem; padding: 1.5rem; border: 1px solid var(--border); border-radius: 8px; background: var(--entry); }
+    .res-item a { color: var(--primary) !important; text-decoration: none; font-size: 1.3rem; font-weight: 700; display: block; margin-bottom: 0.8rem; }
+    .res-item .res-desc { color: var(--secondary) !important; font-size: 0.95rem; line-height: 1.6; }
+</style>
+
+<script src="{{ "js/search.min.js" | absURL }}"></script>
+
+<script>
+    window.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        const searchButton = document.getElementById('searchButton');
+        const searchResults = document.getElementById('searchResults');
+        const finalResults = document.getElementById('finalResults');
+
+        function performSearch() {
+            const query = searchInput.value.trim().toLowerCase();
+            if (query.length === 0) {
+                finalResults.innerHTML = '';
+                return;
+            }
+
+            finalResults.innerHTML = '<p style="text-align:center;">Searching...</p>';
+
+            setTimeout(() => {
+                const rawItems = searchResults.querySelectorAll('li, .list-entry, .entry-item, article');
+                const seenLinks = new Set();
+                let html = '<ul class="res-list">';
+                let foundCount = 0;
+
+                rawItems.forEach(item => {
+                    const linkEl = item.querySelector('a');
+                    if (!linkEl) return;
+                    
+                    const link = linkEl.href.toLowerCase();
+                    if (seenLinks.has(link)) return;
+
+                    const titleEl = item.querySelector('h1, h2, h3, .entry-header, .entry-title, .search-result-title');
+                    const title = (titleEl ? titleEl.innerText : linkEl.innerText).trim();
+                    const descEl = item.querySelector('.entry-content, .entry-summary, .res-desc, p');
+                    const desc = descEl ? descEl.innerText.trim() : "";
+
+                    // [핵심 필터링 로직]
+                    const inTitle = title.toLowerCase().includes(query);
+                    const inDesc = desc.toLowerCase().includes(query);
+                    const isNumeric = /^\d+$/.test(query);
+                    const isHanja = /[\u4E00-\u9FFF]/.test(query); // 한자 체크
+                    
+                    // 날짜 정보(2025, 2026, 02, 08 등)와 겹치는 낚시성 숫자 목록
+                    const commonDateParts = ["2025", "2026", "02", "08", "20", "25", "26", "1", "2"];
+
+                    let shouldShow = false;
+
+                    if (inTitle || inDesc) {
+                        // 제목이나 요약문에 단어가 보이면 무조건 통과
+                        shouldShow = true;
+                    } else if (isHanja) {
+                        // "國"과 같은 한자는 요약문에 안 보여도 엔진이 찾아왔다면 본문에 있는 것이므로 통과
+                        shouldShow = true;
+                    } else if (isNumeric && !commonDateParts.includes(query)) {
+                        // "4", "6", "8" 처럼 날짜 성분이 아닌 숫자는 본문 내용으로 간주하여 통과
+                        shouldShow = true;
+                    } else if (!isNumeric && query.length >= 2 && !/^[a-z]{1,2}$/i.test(query)) {
+                        // 한글 단어(성조, 조류 등)는 본문 검색 보장을 위해 통과
+                        shouldShow = true;
+                    }
+
+                    if (shouldShow) {
+                        seenLinks.add(link);
+                        html += `
+                            <li class="res-item">
+                                <a href="${link}">${title}</a>
+                                <div class="res-desc">${desc || 'The content contains the search term.'}</div>
+                            </li>`;
+                        foundCount++;
+                    }
+                });
+
+                html += '</ul>';
+                finalResults.innerHTML = foundCount > 0 ? html : '<p style="text-align:center;">No results found.</p>';
+                searchResults.innerHTML = '';
+            }, 300);
+        }
+
+        searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') performSearch(); });
+        searchButton.addEventListener('click', performSearch);
+        searchInput.addEventListener('input', () => { if (searchInput.value.trim() === '') finalResults.innerHTML = ''; });
+    });
+</script>
+{{- end -}}

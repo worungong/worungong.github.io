@@ -1,0 +1,239 @@
+{{- define "main" -}}
+<style>
+    /* 전체 컨테이너 */
+    .main-container {
+        display: flex;
+        gap: 40px;
+        width: 100%;
+        max-width: 1400px;
+        margin: 40px auto;
+        padding: 0 40px;
+        position: relative;
+        box-sizing: border-box;
+    }
+
+    .sidebar-wrapper {
+        width: 260px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 40px;
+        height: calc(100vh - 80px);
+        overflow-y: auto;
+        background: var(--theme);
+        border-right: 1px solid var(--border);
+        padding-right: 25px;
+    }
+
+    .content-with-toc {
+        flex: 1;
+        display: flex;
+        gap: 0;
+        min-width: 0;
+    }
+
+    .post {
+        flex: 1;
+        max-width: 800px;
+    }
+
+    .post h1 { font-size: 2.8rem; margin-bottom: 1rem; }
+    .post-meta { color: var(--secondary); margin-bottom: 2rem; }
+    .post-content { line-height: 1.8; font-size: 1.1rem; }
+    .post-footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+
+    .toc-sidebar {
+        width: 240px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 40px;
+        align-self: start;
+        padding-left: 20px;
+        height: calc(100vh - 80px);
+        overflow-y: auto;
+    }
+
+    .toc-sidebar h3 { font-size: 1.2rem; margin-bottom: 1rem; color: var(--primary); }
+    .toc { font-size: 0.95rem; }
+    .toc ul { list-style: none; padding-left: 0; }
+    .toc li { margin: 0.4rem 0; }
+    .toc a { color: var(--primary); text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+
+    #sidebar-toggle { 
+        display: none; 
+        position: fixed; left: 25px; bottom: 25px; z-index: 1001; 
+        background: var(--primary); color: var(--theme); border: none; 
+        border-radius: 50%; width: 55px; height: 55px; cursor: pointer; 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-size: 1.6rem; 
+        align-items: center; justify-content: center; 
+    }
+
+    @media screen and (max-width: 1024px) {
+        #sidebar-toggle { display: flex; }
+        .sidebar-wrapper { 
+            position: fixed; left: 0; top: 0; bottom: 0; z-index: 1000; 
+            background: var(--theme); width: 280px; padding: 40px 25px; 
+            transform: translateX(-100%); opacity: 0; 
+            transition: transform 0.3s ease, opacity 0.3s ease; 
+        }
+        .sidebar-open .sidebar-wrapper { transform: translateX(0); opacity: 1; }
+        .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999; }
+        .sidebar-open .sidebar-overlay { display: block; }
+    }
+
+    #toc-toggle {
+        display: none;
+        position: fixed;
+        right: 25px;
+        bottom: 25px;
+        z-index: 1001;
+        background: var(--primary);
+        color: var(--theme);
+        border: none;
+        border-radius: 50%;
+        width: 55px;
+        height: 55px;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        font-size: 1.5rem;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .toc-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 999;
+    }
+
+    .toc-mobile {
+        position: fixed;
+        right: 0; top: 0; bottom: 0;
+        width: 280px;
+        background: var(--theme);
+        transform: translateX(100%);
+        opacity: 0;
+        transition: transform 0.3s ease, opacity 0.3s ease;
+        z-index: 1000;
+        overflow-y: auto;
+        padding: 40px 25px;
+        box-shadow: -4px 0 12px rgba(0,0,0,0.3);
+    }
+
+    .toc-open .toc-mobile { transform: translateX(0); opacity: 1; }
+    .toc-open .toc-overlay { display: block; }
+
+    @media screen and (max-width: 1024px) {
+        #toc-toggle { display: flex !important; }
+        .toc-sidebar { display: none !important; }
+    }
+
+    .tag-list {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-left: 0.5rem;
+    }
+
+    .tag {
+        display: inline-block;
+        padding: 0.25rem 0.6rem;
+        font-size: 0.9rem;
+        background: var(--primary);
+        color: var(--theme);
+        border-radius: 1rem;
+        text-decoration: none;
+        transition: opacity 0.2s;
+    }
+
+    .tag:hover {
+        opacity: 0.8;
+    }
+</style>
+
+<button id="sidebar-toggle">☰</button>
+<div class="sidebar-overlay" id="overlay"></div>
+
+{{- if and .TableOfContents (gt (len .TableOfContents) 50) -}}  <!-- 빈 nav 방지 강화 -->
+<button id="toc-toggle">🕮</button>
+<div class="toc-overlay" id="toc-overlay"></div>
+{{- end -}}
+
+<div class="main-container">
+    <aside class="sidebar-wrapper">{{- partial "sidebar.html" . -}}</aside>
+    
+    <div class="content-with-toc">
+        <article class="post">
+            <header>
+                <h1>{{ .Title }}</h1>
+                <p class="post-meta">
+                    {{ .Date.Format "2006-01-02" }}
+                    {{- if .Params.tags -}}
+                        <span class="tag-list">
+                            {{- range .Params.tags -}}
+                                <a href="{{ "/tags/" | relLangURL }}{{ . | urlize }}" class="tag">{{ . }}</a>
+                            {{- end -}}
+                        </span>
+                    {{- end -}}
+                </p>
+            </header>
+
+            <div class="post-content">
+                {{ .Content }}
+            </div>
+
+            {{- if .Params.categories -}}
+            <footer class="post-footer">
+                <p>Category: 
+                    {{- range .Params.categories -}}
+                        <a href="{{ "/categories/" | relLangURL }}{{ . | urlize }}">{{ . }}</a> 
+                    {{- end -}}
+                </p>
+            </footer>
+            {{- end -}}
+        </article>
+
+        {{- if and .TableOfContents (gt (len .TableOfContents) 50) -}}
+        <aside class="toc-sidebar">
+            <h3>Table of Contents</h3>
+            <nav class="toc">
+                {{ .TableOfContents }}
+            </nav>
+        </aside>
+        {{- end -}}
+    </div>
+</div>
+
+{{- if and .TableOfContents (gt (len .TableOfContents) 50) -}}
+<aside class="toc-mobile" id="toc-mobile">
+    <h3>Table of Contents</h3>
+    <nav class="toc">
+        {{ .TableOfContents }}
+    </nav>
+</aside>
+{{- end -}}
+
+<script>
+    const toggleBtn = document.getElementById('sidebar-toggle');
+    const overlay = document.getElementById('overlay');
+    if (toggleBtn && overlay) {
+        toggleBtn.addEventListener('click', () => { document.body.classList.toggle('sidebar-open'); });
+        overlay.addEventListener('click', () => { document.body.classList.remove('sidebar-open'); });
+    }
+</script>
+
+{{- if and .TableOfContents (gt (len .TableOfContents) 50) -}}
+<script>
+    const tocBtn = document.getElementById('toc-toggle');
+    const tocMobile = document.getElementById('toc-mobile');
+    const tocOverlay = document.getElementById('toc-overlay');
+    if (tocBtn && tocMobile && tocOverlay) {
+        tocBtn.addEventListener('click', () => { document.body.classList.toggle('toc-open'); });
+        tocOverlay.addEventListener('click', () => { document.body.classList.remove('toc-open'); });
+    }
+</script>
+{{- end -}}
+
+{{- end -}}

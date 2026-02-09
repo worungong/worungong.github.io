@@ -1,0 +1,67 @@
+<aside class="sidebar">
+    <h3 class="sidebar-title">Categories</h3>
+    <ul class="sidebar-menu">
+        {{- range (where .Site.Sections "Section" "notes") }}
+        {{- range .Sections.ByWeight }}
+        <li class="category-item">
+            <a href="{{ .Permalink }}" class="category-name">{{ .Title }}</a>
+            <ul class="sub-category-list">
+                {{- range .Sections.ByWeight }}
+                <li>
+                    <a href="{{ .Permalink }}">{{ .Title }}</a>
+                </li>
+                {{- end }}
+            </ul>
+        </li>
+        {{- end }}
+        {{- end }}
+    </ul>
+</aside>
+
+<style>
+    .sidebar-title {
+        font-size: 1.2rem;
+        margin-bottom: 20px;
+        font-weight: 800;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 10px;
+        color: var(--primary);
+    }
+
+    .sidebar-menu {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .category-item {
+        margin-bottom: 15px;
+    }
+
+    .category-name {
+        font-weight: bold;
+        display: block;
+        margin-bottom: 8px;
+        color: var(--primary);
+    }
+
+    .sub-category-list {
+        list-style: none;
+        padding-left: 15px;
+        margin-top: 5px;
+    }
+
+    .sub-category-list li {
+        margin: 5px 0;
+    }
+
+    .sub-category-list a,
+    .sidebar-wrapper a {
+        font-size: 0.95rem;
+        color: var(--primary);
+    }
+
+    .sidebar-wrapper a:hover {
+        text-decoration: underline;
+    }
+</style>

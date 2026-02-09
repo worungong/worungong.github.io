@@ -1,0 +1,3 @@
+.notes-tree ul { margin-left: 1.5em; list-style-type: disc; }
+.notes-tree a { text-decoration: none; color: #333; }
+.notes-tree a:hover { text-decoration: underline; }

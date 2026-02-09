@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="{{ site.LanguageCode }}" dir="{{ .Language.LanguageDirection | default "auto" }}">
+<head>
+    {{- partial "head.html" . -}}
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700;800&family=Noto+Serif+TC:wght@400;700&family=Noto+Serif+JP:wght@400;700&family=Noto+Serif+Myanmar:wght@400;700&family=Noto+Serif+Tibetan:wght@400&family=Noto+Serif+Thai:wght@400;700&family=Noto+Serif+Devanagari:wght@400;700&family=Noto+Serif+Khmer:wght@400&family=Noto+Serif+Lao:wght@400&display=swap" rel="stylesheet">
+
+    <script>
+      // 페이지가 로드되기 전에 localStorage 값을 보고 클래스 적용 (가장 중요!)
+      (function() {
+        // localStorage에서 사용자 선택을 최우선으로 읽음
+        let theme = localStorage.getItem("pref-theme");
+
+        // 저장된 값이 없으면 시스템 설정 따르기
+        if (!theme) {
+          theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+
+        // html과 body 둘 다에 클래스 적용 (PaperMod가 body를 주로 참조함)
+        if (theme === "dark") {
+          document.documentElement.classList.add("dark");
+          document.body.classList.add("dark");
+        } else {
+          document.documentElement.classList.remove("dark");
+          document.body.classList.remove("dark");
+        }
+      })();
+    </script>
+</head>
+<body>
+
+<style>
+    /* 상단 내비게이션 레이아웃 */
+    .nav { 
+        display: flex !important; 
+        justify-content: flex-end !important; 
+        align-items: center !important; 
+        max-width: 1400px !important; 
+        margin: 0 auto !important; 
+        padding: 30px 40px !important; 
+    }
+    .menu { display: flex !important; align-items: center !important; list-style: none; margin: 0; padding: 0; }
+    .menu li { margin-left: 35px !important; display: flex; align-items: center; }
+    .menu a { font-size: 1.5rem !important; font-weight: 800 !important; color: var(--primary) !important; text-decoration: none; }
+
+    /* 심플한 동그라미 테마 버튼 */
+    #theme-toggle {
+        display: flex !important;
+        cursor: pointer;
+        border: none;
+        background: none;
+        padding: 0;
+        margin-right: 15px; /* Home(H) 바로 왼쪽 배치 */
+        color: var(--primary) !important;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.2s ease;
+    }
+
+    #theme-toggle:hover { opacity: 0.6; }
+
+    /* 동그라미 심볼 스타일 */
+    .mode-circle {
+        width: 20px;
+        height: 20px;
+        background-color: var(--primary); /* 라이트: 검정계열 / 다크: 흰색계열 자동 전환 */
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .main { max-width: unset !important; padding: 0 40px !important; width: 100%; }
+
+    /* 모든 페이지 공통 사이드바 */
+    .main-container {
+        display: flex;
+        gap: 40px;
+        width: 100%;
+        max-width: 1400px;
+        margin: 40px auto 0;
+        padding: 0 40px;
+        box-sizing: border-box;
+    }
+
+    .sidebar-wrapper {
+        width: 260px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 40px;
+        height: calc(100vh - 80px);
+        overflow-y: auto;
+        background: var(--theme);
+        border-right: 1px solid var(--border);
+        padding-right: 25px;
+        padding-top: 0;
+        margin-top: 0;
+    }
+
+    @media (max-width: 900px) {
+        .main-container {
+            flex-direction: column;
+            padding: 0 20px;
+            margin: 20px auto;
+        }
+        .sidebar-wrapper {
+            width: 100%;
+            position: relative;
+            top: auto;
+            height: auto;
+            padding-right: 0;
+            border-right: none;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 30px;
+        }
+    }
+
+    /* PaperMod 기본 top 버튼 완전히 숨김 */
+    .top-link, .top-link svg, [href="#top"], [title*="Go to Top"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
+
+    /* 맨 위로 가는 버튼 스타일 (위치 조금 내림: bottom 135px → 95px) */
+    #back-to-top {
+        position: fixed;
+        bottom: 90px;  /* ← 135px → 95px로 조정 (목차 토글 바로 위에 위치) */
+        right: 25px;
+        z-index: 1001;
+        background: var(--primary);
+        color: var(--theme);
+        border: none;
+        border-radius: 50%;
+        width: 55px;
+        height: 55px;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        font-size: 1.6rem;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.3s;
+    }
+
+    body.dark #back-to-top {
+        background: var(--primary);    /* 다크 모드: 흰색 */
+        color: var(--theme);         /* 다크 모드: 검정 아이콘 */
+    }
+
+    #back-to-top:hover {
+        opacity: 0.8;
+    }
+
+/* 홈 제목 전체가 화면 폭 안에 들어오도록 강제 조절 */
+    .home-header h1 {
+        white-space: nowrap !important;
+        display: inline-block !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+        line-height: 1.0 !important;
+        margin: 0 auto !important;
+        padding: 0 0.5rem !important;
+        box-sizing: border-box !important;
+        font-weight: 900 !important;
+        letter-spacing: -0.05em !important;
+    }
+
+    /* vw 단위로 폰트 크기 극단적으로 축소 → 화면 폭의 90~95% 정도 차지하도록 */
+    .home-header h1 {
+        font-size: clamp(2rem, 11vw, 5.5rem) !important;   /* 핵심: vw를 높여서 더 빨리 작아짐 */
+    }
+
+    @media (max-width: 900px) {
+        .home-header h1 {
+            font-size: clamp(1.8rem, 10vw, 4.5rem) !important;
+            letter-spacing: -0.04em !important;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .home-header h1 {
+            font-size: clamp(1.6rem, 9.5vw, 3.8rem) !important;
+            letter-spacing: -0.03em !important;
+        }
+    }
+
+    @media (max-width: 400px) {
+        .home-header h1 {
+            font-size: clamp(1.4rem, 9vw, 3.2rem) !important;
+            letter-spacing: -0.025em !important;
+        }
+    }
+
+    /* 헤더 컨테이너도 안전장치 */
+    .home-header {
+        margin: 1rem 0 1.5rem !important;
+        text-align: center !important;
+        width: 100% !important;
+        overflow: hidden !important;
+        padding: 0 1rem !important;
+    }
+
+/* 기본 본문 스타일 (전체) */
+.post-content, .post-content * {
+    font-family:
+        'Cambria Math', /* IPA·특수문자·라틴 최우선 */
+        'Noto Serif KR', 'Nanum Myeongjo', /* 한국어 */
+        'Noto Serif TC', 'KaiTi', 'STKaiti', /* 중국어 */
+        'Noto Serif JP', /* 일본어 */
+        'Noto Serif Myanmar', /* 버마어 */
+        'Noto Serif Tibetan', /* 티베트어 */
+        'Noto Serif Thai', /* 타이어 */
+        'Noto Serif Devanagari', /* 데바나가리 */
+        'Noto Serif Khmer', /* 크메르 */
+        'Noto Serif Lao', /* 라오 */
+        serif !important;
+    line-height: 1.8;
+    font-size: 1.3rem
+}
+
+/* 중국어·한자 텍스트: 크기 중간, 굵기 약간 얇게 */
+.post-content :lang(zh), 
+.post-content .chinese,
+.post-content [lang*="zh"] {
+    font-size: 1.18rem !important;      /* 한자는 조금 작게 (밀도 높아서) */
+    font-weight: 400 !important;        /* 가벼운 느낌으로 */
+}
+
+/* 기타 언어 (버마어·티베트어·타이어 등) - 기본 크기 유지 */
+.post-content :lang(my), 
+.post-content :lang(bo), 
+.post-content :lang(th) {
+    font-size: 1.2rem !important;
+    font-weight: 400 !important;
+}
+</style>
+
+<header class="header">
+    <nav class="nav">
+        <ul id="menu" class="menu">
+            <li style="margin-left: 0 !important;">
+                <button id="theme-toggle" title="테마 변경">
+                    <span class="mode-circle"></span>
+                </button>
+            </li>
+            {{- range site.Menus.main -}}
+            <li><a href="{{ .URL | absLangURL }}"><span>{{ .Name }}</span></a></li>
+            {{- end -}}
+        </ul>
+    </nav>
+</header>
+
+<main class="main">{{- block "main" . }}{{ end -}}</main>
+{{- partial "footer.html" . -}}
+
+<!-- 맨 위로 가는 버튼 -->
+<button id="back-to-top" title="맨 위로" style="font-family: 'KaiTi', serif; font-weight: 500; font-size: 1.7rem; padding-bottom: 2px;">
+    上
+</button>
+
+<script>
+    // 테마 토글
+    const btn = document.getElementById("theme-toggle");
+    if (btn) {
+        btn.addEventListener("click", () => {
+            const isDark = document.body.classList.toggle("dark");
+            localStorage.setItem("pref-theme", isDark ? "dark" : "light");
+        });
+
+        const saved = localStorage.getItem("pref-theme");
+        if (saved === "dark") {
+            document.body.classList.add("dark");
+        } else if (saved === "light") {
+            document.body.classList.remove("dark");
+        }
+    }
+
+    // 맨 위로 가는 버튼 동작
+    const backToTop = document.getElementById('back-to-top');
+
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 300) {
+            backToTop.style.display = 'flex';
+        } else {
+            backToTop.style.display = 'none';
+        }
+    });
+
+    backToTop.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+</script>
+</body>
+</html>

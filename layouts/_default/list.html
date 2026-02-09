@@ -1,0 +1,94 @@
+{{- define "main" -}}
+<style>
+    .main-container { display: flex; gap: 40px; align-items: flex-start; width: 100%; max-width: 1400px; margin: 40px auto; position: relative; }
+    .post-content-area { flex: 1; min-width: 0; }
+    .sidebar-wrapper { 
+        width: 260px; flex-shrink: 0; position: sticky; top: 40px; 
+        border-right: 1px solid var(--border); padding-right: 25px; 
+        height: calc(100vh - 80px); overflow-y: auto; 
+        background: var(--theme);
+    }
+
+    .sidebar-wrapper a:hover { text-decoration: underline !important; }
+
+    #sidebar-toggle { display: none; position: fixed; left: 25px; bottom: 25px; z-index: 1001; background: var(--primary); color: var(--theme); border: none; border-radius: 50%; width: 55px; height: 55px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-size: 1.6rem; align-items: center; justify-content: center; }
+    .notes-breadcrumbs { display: flex; align-items: center; gap: 8px; margin-bottom: 25px; font-size: 1.1rem; color: var(--secondary); font-weight: 700; }
+    .notes-breadcrumbs a { color: var(--secondary) !important; }
+    .home-header h1 { font-size: 5.5rem; font-weight: 900; letter-spacing: -3px; line-height: 2; margin: 0 auto !important;
+    padding-bottom: 0.3em !important; overflow: visible !important; }
+    .section-title { font-size: 2.3rem; font-weight: 800; border-bottom: 2px solid var(--primary); padding-bottom: 15px; margin: 60px 0 30px 0; }
+    .post-item-link { font-size: 1.5rem; font-weight: 700; color: var(--primary); text-decoration: none; }
+
+    @media screen and (max-width: 1024px) {
+        #sidebar-toggle { display: flex; }
+        .sidebar-wrapper { position: fixed; left: 0; top: 0; bottom: 0; z-index: 1000; background: var(--theme); width: 280px; padding: 40px 25px; transform: translateX(-100%); opacity: 0; transition: transform 0.3s ease, opacity 0.3s ease; }
+        .sidebar-open .sidebar-wrapper { transform: translateX(0); opacity: 1; }
+        .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 999; }
+        .sidebar-open .sidebar-overlay { display: block; }
+    }
+</style>
+
+<button id="sidebar-toggle">☰</button>
+
+<div class="main-container">
+    <aside class="sidebar-wrapper">{{- partial "sidebar.html" . -}}</aside>
+    <main class="post-content-area">
+        {{- if .IsHome -}}
+            <header class="home-header">
+                <h1>{{ .Site.Title }}</h1>
+            </header>
+            {{- $targetSections := slice "notes" "publications" "journal" "quotes" -}}
+            {{- range $targetSections -}}{{- with site.GetPage (printf "/%s" .) -}}
+            <section>
+                <h2 class="section-title"><a href="{{ .Permalink }}" style="color:inherit; text-decoration:none;">{{ .Title }}</a></h2>
+{{- range (.RegularPagesRecursive | first 5) -}}
+<div style="padding: 20px 0; border-bottom: 1px solid var(--border);">
+    <a href="{{ .Permalink }}" class="post-item-link">{{ .Title }}</a>
+    <div class="post-date-home">
+        {{ .Date.Format "2006-01-02" }}
+    </div>
+</div>
+{{- end -}}
+            </section>
+            {{- end -}}{{- end -}}
+        {{- else -}}
+            {{- if and (eq .Section "notes") (ne .Title "Notes") -}}
+            <nav class="notes-breadcrumbs">
+                {{- range .Ancestors.Reverse -}}{{- if and .Title (not .IsHome) -}}<a href="{{ .Permalink }}">{{ .Title }}</a><span class="sep">/</span>{{- end -}}{{- end -}}
+                <span style="color: var(--primary);">{{ .Title }}</span>
+            </nav>
+            {{- end -}}
+            <header style="margin-bottom: 40px;"><h1 style="font-size: 3.5rem; font-weight: 800;">{{ .Title }}</h1></header>
+            {{- if .Sections -}}
+                {{- range .Sections -}}
+                <section>
+                    <h2 class="section-title"><a href="{{ .Permalink }}" style="color:inherit; text-decoration:none;">{{ .Title }}</a></h2>
+{{- range (.RegularPagesRecursive | first 5) -}}
+<div style="padding: 20px 0; border-bottom: 1px solid var(--border);">
+    <a href="{{ .Permalink }}" class="post-item-link">{{ .Title }}</a>
+    <div class="post-date-home">{{ .Date.Format "2006-01-02" }}</div>
+</div>
+                    {{- end -}}
+                </section>
+                {{- end -}}
+            {{- else -}}
+{{- range .Paginator.Pages -}}
+<div style="padding: 20px 0; border-bottom: 1px solid var(--border);">
+    <a href="{{ .Permalink }}" class="post-item-link">{{ .Title }}</a>
+    <div class="post-date-home">
+        {{ .Date.Format "2006-01-02" }}
+    </div>
+</div>
+                {{- end -}}
+            {{- end -}}
+        {{- end -}}
+    </main>
+</div>
+
+<script>
+    const toggleBtn = document.getElementById('sidebar-toggle');
+    const overlay = document.getElementById('overlay');
+    toggleBtn.addEventListener('click', () => { document.body.classList.toggle('sidebar-open'); });
+    overlay.addEventListener('click', () => { document.body.classList.remove('sidebar-open'); });
+</script>
+{{- end -}}

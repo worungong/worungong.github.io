@@ -1,0 +1,54 @@
+baseURL = 'https://worungong.github.io/'
+languageCode = 'en-US'
+title = 'Mouchengzhai 謀成齋'
+theme = 'PaperMod'
+
+[params]
+    env = "production"
+    title = "Mouchengzhai 謀成齋"
+    description = "Studio of Planning and Success"
+    author = "Worun"
+    defaultTheme = "light"               
+    ShowThemeToggle = true               
+    # disableThemeToggle = false         
+    DateFormat = "2006-01-02"
+    ShowReadingTime = false
+    ShowBreadCrumbs = false
+    ShowCodeCopyButtons = true
+    HideTot = true                       
+
+[outputs]
+    home = ["HTML", "RSS", "JSON"]   
+
+[[menu.main]]
+    name = "🔎︎ Search"
+    url = "/search/"
+    weight = 10
+[[menu.main]]
+    name = "Home"
+    url = "/"
+    weight = 20
+[[menu.main]]
+    name = "About"
+    url = "/about/"
+    weight = 30
+[[menu.main]]
+    name = "Notes"
+    url = "/notes/"
+    weight = 40
+[[menu.main]]
+    name = "Publications"
+    url = "/publications/"
+    weight = 50
+[[menu.main]]
+    name = "Journal"
+    url = "/journal/"
+    weight = 60
+[[menu.main]]
+    name = "Quotes"
+    url = "/quotes/"
+    weight = 70
+
+[taxonomies]
+    category = "categories"
+    tag = "tags"
